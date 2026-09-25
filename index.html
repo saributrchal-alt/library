@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f8f7f3" />
+  <meta name="description" content="ค้นหาหนังสือ ห้องสมุดวัดพุทธอุทยานนาเทิง" />
+  <title>ห้องสมุดวัดพุทธอุทยานนาเทิง</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/config.js"></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a href="/" class="brand" aria-label="หน้าแรกห้องสมุด"><span class="brand-mark" aria-hidden="true">✦</span><span>ห้องสมุดนาเทิง<small>NATHOENG LIBRARY</small></span></a>
+    <a class="member-link" href="https://watt.nathoeng.com/">สมาชิกวัด <span aria-hidden="true">↗</span></a>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="eyebrow"><span class="eyebrow-line"></span> วัดพุทธอุทยานนาเทิง</div>
+      <h1 id="hero-title">หนังสือดี ๆ <em>รอให้ค้นพบ</em></h1>
+      <p class="intro">ค้นหาหนังสือจากห้องสมุดของวัด ด้วยชื่อหนังสือ ผู้เขียน หรือคำที่สนใจ</p>
+      <form id="search-form" role="search"><label class="sr-only" for="search">ค้นหาหนังสือ</label><span class="search-icon" aria-hidden="true">⌕</span><input id="search" name="q" type="search" autocomplete="off" placeholder="ค้นหาหนังสือ ผู้เขียน หรือหัวข้อ..." /><button type="submit">ค้นหา <span aria-hidden="true">→</span></button></form>
+      <p class="search-hint">อ่านรายละเอียดหนังสือก่อนตัดสินใจยืม</p>
+    </section>
+    <section id="results-section" class="results-section" aria-live="polite" hidden><div class="section-head"><div><p class="section-kicker">ผลการค้นหา</p><h2 id="results-title">หนังสือที่พบ</h2></div><button id="clear-search" class="text-button" type="button">ล้างการค้นหา</button></div><div id="results" class="results-grid"></div><p id="result-message" class="result-message" hidden></p></section>
+    <section class="how-it-works" aria-labelledby="how-title"><span class="section-kicker">การใช้ห้องสมุด</span><h2 id="how-title">ค้นหา · เลือก · ยืม</h2><div class="steps"><div><span class="step-number">01</span><h3>ค้นหาหนังสือ</h3><p>พิมพ์ชื่อเรื่อง ผู้เขียน หรือหัวข้อที่สนใจ</p></div><div><span class="step-number">02</span><h3>ดูรายละเอียด</h3><p>ตรวจสอบข้อมูลหนังสือและสถานะการให้ยืม</p></div><div><span class="step-number">03</span><h3>ยืนยันสมาชิก</h3><p>ใช้สมาชิกของวัดและบัตรสมาชิกใบเดิมเพื่อขอยืมหนังสือ</p></div></div></section>
+  </main>
+  <div id="detail-modal" class="modal" hidden><div class="modal-backdrop" data-close="true"></div><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="detail-title" tabindex="-1"><button id="close-detail" class="close-button" type="button" aria-label="ปิด">×</button><div id="detail-content"></div></div></div>
+  <footer><span>ห้องสมุดวัดพุทธอุทยานนาเทิง</span><span>อ่าน เรียนรู้ และแบ่งปัน</span></footer>
+</body>
+</html>
