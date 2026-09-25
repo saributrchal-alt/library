@@ -18,7 +18,8 @@ async function api(action, method = 'GET', data = null, params = {}) {
   const url = new URL('/api/library', location.origin); url.searchParams.set('action', action);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   const response = await fetch(url, { method, headers: { Authorization: `Bearer ${token}`, ...(data ? { 'Content-Type': 'application/json' } : {}) }, ...(data ? { body: JSON.stringify(data) } : {}) });
-  const result = await response.json(); if (!response.ok) throw new Error(result.error || 'บันทึกไม่สำเร็จ');
+  const result = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(result?.error || `บันทึกไม่สำเร็จ (HTTP ${response.status})`);
   return result;
 }
 function data(form) { return Object.fromEntries(new FormData(form).entries()); }
@@ -94,8 +95,34 @@ function previewCover() {
   box.append(image);
 }
 async function save(form, action, success) {
-  try { const result = await api(action, 'POST', data(form)); note(success(result)); await refresh(); return result; }
-  catch (error) { note(error.message, true); return null; }
+  const button = form.querySelector('button[type="submit"]');
+  let status = form.querySelector('.save-status');
+  if (!status) {
+    status = document.createElement('p');
+    status.className = 'save-status';
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    button.after(status);
+  }
+  button.disabled = true;
+  status.classList.remove('error');
+  status.textContent = 'กำลังบันทึก...';
+  try {
+    const result = await api(action, 'POST', data(form));
+    status.textContent = success(result);
+    note(status.textContent);
+    try { await refresh(); }
+    catch (error) { note(`บันทึกแล้ว แต่โหลดรายการใหม่ไม่สำเร็จ: ${error.message}`, true); }
+    return result;
+  } catch (error) {
+    status.textContent = error.message || 'บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง';
+    status.classList.add('error');
+    note(status.textContent, true);
+    status.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    return null;
+  } finally {
+    button.disabled = false;
+  }
 }
 document.addEventListener('DOMContentLoaded', async () => {
   try {
