@@ -20,18 +20,12 @@ function showMessage(content) {
   message.textContent = content;
   message.hidden = false;
 }
-function configured() { return Boolean(config.supabaseUrl && config.supabaseAnonKey); }
 async function searchBooks(query) {
-  const base = String(config.supabaseUrl).replace(/\/$/, '');
-  const url = new URL(`${base}/rest/v1/books`);
-  url.searchParams.set('select', 'id,title,author,description,category,isbn,cover_url,available_copies,total_copies');
-  url.searchParams.set('is_active', 'eq.true');
-  url.searchParams.set('or', `(title.ilike.%${query}%,author.ilike.%${query}%,category.ilike.%${query}%)`);
-  url.searchParams.set('order', 'title.asc');
-  url.searchParams.set('limit', '40');
-  const response = await fetch(url, {headers: {apikey: config.supabaseAnonKey, Authorization: `Bearer ${config.supabaseAnonKey}`}});
+  const url = new URL('/api/library', location.origin);
+  url.searchParams.set('action', 'catalog'); url.searchParams.set('q', query);
+  const response = await fetch(url);
   if (!response.ok) throw new Error(`Catalog HTTP ${response.status}`);
-  return response.json();
+  return (await response.json()).books;
 }
 function renderBooks(books) {
   currentBooks = books;
@@ -58,10 +52,9 @@ async function submitSearch(event) {
   section.scrollIntoView({behavior: 'smooth', block: 'start'});
   heading.textContent = `ผลการค้นหา “${query}”`;
   results.replaceChildren(); message.hidden = true;
-  if (!configured()) return showMessage('หน้าเว็บพร้อมแล้ว กำลังเชื่อมต่อทะเบียนหนังสือของห้องสมุด โปรดลองอีกครั้งภายหลัง');
   showMessage('กำลังค้นหาหนังสือ...');
   try { const books = await searchBooks(query); message.hidden = true; renderBooks(books); }
-  catch (error) { console.error(error); showMessage('ยังค้นหารายการหนังสือไม่ได้ในขณะนี้ กรุณาลองอีกครั้งภายหลัง'); }
+  catch (error) { console.error(error); showMessage('ทะเบียนหนังสือยังไม่ได้เชื่อมต่อ กรุณาลองอีกครั้งภายหลัง'); }
 }
 function openDetail(book) {
   previousFocus = document.activeElement;
