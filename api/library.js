@@ -25,7 +25,12 @@ async function db(path, method = 'GET', body) {
   });
   const raw = await response.text();
   let data; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
-  if (!response.ok) throw new Error(data?.message || `Database error ${response.status}`);
+  if (!response.ok) {
+    const error = new Error(data?.message || `Database error ${response.status}`);
+    error.httpStatus = response.status;
+    error.dbCode = String(data?.code || '').slice(0,30);
+    throw error;
+  }
   return data;
 }
 function isbn(raw) {
@@ -55,7 +60,7 @@ export default async function handler(req, res) {
       if (!query) return res.json({ books: [] });
       const books = await db('books?is_active=eq.true&select=id,title,author,description,category,isbn,cover_url,available_copies,total_copies&order=title.asc&limit=500');
       return res.json({ books: books.filter(b => [b.title,b.author,b.category,b.isbn].some(v => String(v || '').toLocaleLowerCase('th').includes(query))).slice(0,40) });
-    } catch(error) { console.error('Catalog:',error); return res.status(503).json({ error: 'ยังค้นหาทะเบียนหนังสือไม่ได้' }); }
+    } catch(error) { console.error('Catalog:',error); return res.status(503).json({ error: 'ยังค้นหาทะเบียนหนังสือไม่ได้', dbStatus: error.httpStatus || null, dbCode: error.dbCode || null }); }
   }
   if (!process.env.LIBRARY_SHARED_SECRET || !process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY)
     return res.status(503).json({ error: 'ยังไม่ได้ตั้งค่าการเชื่อมระบบสมาชิก' });
