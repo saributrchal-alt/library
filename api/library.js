@@ -17,8 +17,10 @@ function session(token) {
 }
 async function db(path, method = 'GET', body) {
   const key = process.env.SUPABASE_SECRET_KEY;
+  const headers = { apikey: key, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+  if (!key.startsWith('sb_secret_')) headers.Authorization = `Bearer ${key}`;
   const response = await fetch(`${process.env.SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${path}`, {
-    method, cache: 'no-store', headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    method, cache: 'no-store', headers,
     ...(body === undefined ? {} : { body: JSON.stringify(body) })
   });
   const raw = await response.text();
