@@ -45,6 +45,16 @@ async function memberByCard(raw) {
 }
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  const action = str(req.query.action, 30);
+  if (action === 'catalog' && req.method === 'GET') {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY) return res.status(503).json({ error: 'ยังไม่ได้เชื่อมทะเบียนหนังสือ' });
+    try {
+      const query = str(req.query.q, 80).toLocaleLowerCase('th');
+      if (!query) return res.json({ books: [] });
+      const books = await db('books?is_active=eq.true&select=id,title,author,description,category,isbn,cover_url,available_copies,total_copies&order=title.asc&limit=500');
+      return res.json({ books: books.filter(b => [b.title,b.author,b.category,b.isbn].some(v => String(v || '').toLocaleLowerCase('th').includes(query))).slice(0,40) });
+    } catch(error) { console.error('Catalog:',error); return res.status(503).json({ error: 'ยังค้นหาทะเบียนหนังสือไม่ได้' }); }
+  }
   if (!process.env.SESSION_SECRET || !process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY)
     return res.status(503).json({ error: 'ยังไม่ได้ตั้งค่าการเชื่อมระบบสมาชิก' });
   const claim = session(str(req.headers.authorization).replace(/^Bearer\s+/i, ''));
@@ -53,7 +63,6 @@ export default async function handler(req, res) {
     const people = await db(`members?id=eq.${enc(claim.sub)}&select=id,role,membership_status&limit=1`);
     const actor = people[0];
     if (!actor || (actor.membership_status && actor.membership_status !== 'active')) return res.status(403).json({ error: 'สมาชิกไม่มีสิทธิ์ใช้งาน' });
-    const action = str(req.query.action, 30);
     const staff = actor.role === 'admin';
     if (action === 'me') return res.json({ id: actor.id, role: actor.role, staff });
     if (!staff) return res.status(403).json({ error: 'เฉพาะผู้ดูแลระบบวัด' });
