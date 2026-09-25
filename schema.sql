@@ -41,6 +41,12 @@ create table if not exists public.library_copy_events (
   member_id text, actor_id text not null,
   details text, created_at timestamptz not null default now()
 );
+-- The server uses SUPABASE_SECRET_KEY to query through the Data API.
+-- New Supabase projects require explicit grants even for service_role.
+grant usage on schema public to service_role;
+grant select, insert, update on table public.books to service_role;
+grant select on table public.library_copies, public.library_loans to service_role;
+
 -- Client browsers have no direct access to inventory, loans or audit history.
 alter table public.library_copies enable row level security;
 alter table public.library_loans enable row level security;
