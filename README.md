@@ -13,7 +13,7 @@
 ## ตั้งค่าก่อนใช้จริง
 
 1. ใช้ **Supabase project เดียวกับเว็บวัด** และรัน [`schema.sql`](schema.sql) ใน SQL Editor หลังตรวจสอบตารางเดิม/สำรองข้อมูล ตาราง `member_card_numbers` และ `members.membership_status` ต้องมีอยู่แล้วในเว็บวัด
-2. ที่ Vercel โปรเจกต์ `library` ตั้ง `SUPABASE_URL`, `SUPABASE_SECRET_KEY` และ `SESSION_SECRET` ให้ตรงกับโปรเจกต์เว็บวัด (`SESSION_SECRET` เป็น secret ฝั่งเซิร์ฟเวอร์เท่านั้น)
+2. ที่ Vercel โปรเจกต์ `library` ตั้ง `SUPABASE_URL`, `SUPABASE_SECRET_KEY` จาก Supabase โปรเจกต์เว็บวัด และ `LIBRARY_SHARED_SECRET` ซึ่งเป็นคีย์ใหม่เฉพาะห้องสมุด ตั้ง `LIBRARY_SHARED_SECRET` ค่าเดียวกันใน Vercel โปรเจกต์เว็บวัดด้วย (ไม่ต้องแก้ `SESSION_SECRET` เดิม)
 3. เพิ่ม route `library-session` ใน `api/line-login.js` ของเว็บวัดแล้ว ฟังก์ชันนี้อ่าน cookie login ของเว็บวัด ตรวจสมาชิกในฐานจริง และออกโทเค็นอายุ 3 นาทีเฉพาะห้องสมุด
 4. หน้าค้นหาสาธารณะเรียก API ฝั่งเซิร์ฟเวอร์ของห้องสมุด ไม่ต้องใส่ key ใน `config.js` ห้ามใส่ secret/service-role key ในไฟล์เว็บ
 5. ตรวจจริงด้วยบัตรผู้ดูแล บัตรสมาชิกทั่วไป ISBN หนึ่งรายการ ตัวเล่มสองเล่ม และขั้นตอนยืมคืน
