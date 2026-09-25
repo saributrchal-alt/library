@@ -106,8 +106,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (error) {
     $('#auth-status').classList.add('error');
     $('#auth-status').textContent = error.message;
-    const link = document.createElement('a'); link.href = 'https://watt.nathoeng.com/'; link.textContent = ' ไปเข้าสู่ระบบสมาชิกวัด ↗';
-    $('#auth-status').append(link);
+    if (/เข้าสู่ระบบสมาชิกวัดก่อน/.test(error.message)) {
+      const link = document.createElement('a'); link.href = 'https://watt.nathoeng.com/'; link.textContent = ' ไปเข้าสู่ระบบสมาชิกวัด ↗';
+      $('#auth-status').append(link);
+    }
   }
 });
 document.querySelectorAll('.tabs button').forEach(button => button.addEventListener('click', () => {
