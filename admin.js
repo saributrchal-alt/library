@@ -8,7 +8,7 @@ function note(message, error = false) {
 }
 async function authenticate() {
   if (assertion && Date.now() < expiry) return assertion;
-  const response = await fetch('https://watt.nathoeng.com/api/library-session', { credentials: 'include', cache: 'no-store' });
+  const response = await fetch('https://watt.nathoeng.com/api/line-login?route=library-session', { credentials: 'include', cache: 'no-store' });
   if (!response.ok) throw new Error(response.status === 401 ? 'กรุณาเข้าสู่ระบบสมาชิกที่เว็บไซต์วัดก่อน แล้วกลับมาหน้านี้' : 'ยังเชื่อมต่อสิทธิ์สมาชิกวัดไม่ได้');
   const data = await response.json(); assertion = data.token; expiry = Date.now() + 120000;
   return assertion;
