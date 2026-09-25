@@ -65,7 +65,7 @@ export default async function handler(req, res) {
   if (!process.env.LIBRARY_SHARED_SECRET || !process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY)
     return res.status(503).json({ error: 'ยังไม่ได้ตั้งค่าการเชื่อมระบบสมาชิก' });
   const claim = session(str(req.headers.authorization).replace(/^Bearer\s+/i, ''));
-  if (!claim) return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบสมาชิกวัดอีกครั้ง' });
+  if (!claim) return res.status(401).json({ error: 'เชื่อมสิทธิ์สมาชิกวัดไม่สำเร็จ กรุณาตรวจว่า LIBRARY_SHARED_SECRET ของเว็บวัดและห้องสมุดตรงกัน แล้ว Redeploy ทั้งสองโปรเจกต์' });
   try {
     const people = await db(`members?id=eq.${enc(claim.sub)}&select=id,role,membership_status&limit=1`);
     const actor = people[0];
