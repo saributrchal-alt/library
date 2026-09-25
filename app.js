@@ -24,7 +24,7 @@ function configured() { return Boolean(config.supabaseUrl && config.supabaseAnon
 async function searchBooks(query) {
   const base = String(config.supabaseUrl).replace(/\/$/, '');
   const url = new URL(`${base}/rest/v1/books`);
-  url.searchParams.set('select', 'id,title,author,description,category,isbn,available_copies,total_copies');
+  url.searchParams.set('select', 'id,title,author,description,category,isbn,cover_url,available_copies,total_copies');
   url.searchParams.set('is_active', 'eq.true');
   url.searchParams.set('or', `(title.ilike.%${query}%,author.ilike.%${query}%,category.ilike.%${query}%)`);
   url.searchParams.set('order', 'title.asc');
@@ -40,7 +40,9 @@ function renderBooks(books) {
   books.forEach(book => {
     const card = el('button', 'book-card');
     card.type = 'button';
-    card.append(el('span', 'book-spine', '✦'));
+    if (book.cover_url && /^https:\/\//i.test(book.cover_url)) {
+      const cover = el('img', 'book-cover'); cover.src = book.cover_url; cover.alt = ''; cover.loading = 'lazy'; card.append(cover);
+    } else card.append(el('span', 'book-spine', '✦'));
     const body = el('span');
     body.append(el('h3', '', book.title), el('p', '', book.author || 'ไม่ระบุผู้เขียน'), el('small', '', book.available_copies > 0 ? 'มีหนังสือให้ยืม' : 'ยังไม่มีเล่มว่าง'));
     card.append(body);
