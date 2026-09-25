@@ -1,19 +1,17 @@
-import crypto from 'node:crypto';
-
 const str = (v, n = 300) => String(v ?? '').trim().slice(0, n);
 const enc = encodeURIComponent;
-function session(token) {
-  const secret = process.env.LIBRARY_SHARED_SECRET;
-  if (!secret || !token || token.length > 4000) return null;
-  const [body, sig, extra] = token.split('.');
-  if (!body || !sig || extra) return null;
-  const expected = crypto.createHmac('sha256', secret).update(body).digest('base64url');
-  const a = Buffer.from(sig), b = Buffer.from(expected);
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
-  try {
-    const claim = JSON.parse(Buffer.from(body, 'base64url').toString());
-    return claim.aud === 'nathoeng-library' && claim.sub && claim.exp > Date.now() && claim.exp - Date.now() <= 300000 ? claim : null;
-  } catch { return null; }
+async function session(token) {
+  if (!token || token.length > 4000) return null;
+  const response = await fetch('https://watt.nathoeng.com/api/line-login?route=library-verify', {
+    method: 'POST',
+    cache: 'no-store',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token })
+  });
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error('Temple verification unavailable');
+  const claim = await response.json();
+  return claim?.sub ? claim : null;
 }
 async function db(path, method = 'GET', body) {
   const key = process.env.SUPABASE_SECRET_KEY;
@@ -62,10 +60,12 @@ export default async function handler(req, res) {
       return res.json({ books: books.filter(b => [b.title,b.author,b.category,b.isbn].some(v => String(v || '').toLocaleLowerCase('th').includes(query))).slice(0,40) });
     } catch(error) { console.error('Catalog:',error); return res.status(503).json({ error: 'ยังค้นหาทะเบียนหนังสือไม่ได้', dbStatus: error.httpStatus || null, dbCode: error.dbCode || null }); }
   }
-  if (!process.env.LIBRARY_SHARED_SECRET || !process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY)
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY)
     return res.status(503).json({ error: 'ยังไม่ได้ตั้งค่าการเชื่อมระบบสมาชิก' });
-  const claim = session(str(req.headers.authorization).replace(/^Bearer\s+/i, ''));
-  if (!claim) return res.status(401).json({ error: 'เชื่อมสิทธิ์สมาชิกวัดไม่สำเร็จ กรุณาตรวจว่า LIBRARY_SHARED_SECRET ของเว็บวัดและห้องสมุดตรงกัน แล้ว Redeploy ทั้งสองโปรเจกต์' });
+  let claim;
+  try { claim = await session(String(req.headers.authorization || '').replace(/^Bearer\s+/i, '')); }
+  catch { return res.status(503).json({ error: 'ยังตรวจสอบสิทธิ์กับเว็บไซต์วัดไม่ได้ กรุณาลองใหม่อีกครั้ง' }); }
+  if (!claim) return res.status(401).json({ error: 'ข้อมูลเข้าสู่ระบบหมดอายุ กรุณารีเฟรชหน้าเจ้าหน้าที่' });
   try {
     const people = await db(`members?id=eq.${enc(claim.sub)}&select=id,role,membership_status&limit=1`);
     const actor = people[0];
