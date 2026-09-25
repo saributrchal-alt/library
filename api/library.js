@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 const str = (v, n = 300) => String(v ?? '').trim().slice(0, n);
 const enc = encodeURIComponent;
 function session(token) {
-  const secret = process.env.SESSION_SECRET;
+  const secret = process.env.LIBRARY_SHARED_SECRET;
   if (!secret || !token || token.length > 4000) return null;
   const [body, sig, extra] = token.split('.');
   if (!body || !sig || extra) return null;
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       return res.json({ books: books.filter(b => [b.title,b.author,b.category,b.isbn].some(v => String(v || '').toLocaleLowerCase('th').includes(query))).slice(0,40) });
     } catch(error) { console.error('Catalog:',error); return res.status(503).json({ error: 'ยังค้นหาทะเบียนหนังสือไม่ได้' }); }
   }
-  if (!process.env.SESSION_SECRET || !process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY)
+  if (!process.env.LIBRARY_SHARED_SECRET || !process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY)
     return res.status(503).json({ error: 'ยังไม่ได้ตั้งค่าการเชื่อมระบบสมาชิก' });
   const claim = session(str(req.headers.authorization).replace(/^Bearer\s+/i, ''));
   if (!claim) return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบสมาชิกวัดอีกครั้ง' });
