@@ -19,7 +19,7 @@ async function db(path, method = 'GET', body) {
   const key = process.env.SUPABASE_SECRET_KEY;
   const headers = { apikey: key, 'Content-Type': 'application/json', Prefer: 'return=representation' };
   if (!key.startsWith('sb_secret_')) headers.Authorization = `Bearer ${key}`;
-  const response = await fetch(`${process.env.SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${path}`, {
+  const response = await fetch(`${new URL(process.env.SUPABASE_URL).origin}/rest/v1/${path}`, {
     method, cache: 'no-store', headers,
     ...(body === undefined ? {} : { body: JSON.stringify(body) })
   });
