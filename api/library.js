@@ -9,6 +9,7 @@ async function session(token) {
     body: JSON.stringify({ token })
   });
   if (response.status === 401) return null;
+  if (response.status === 400 || response.status === 405) throw new Error('TEMPLE_VERSION_OLD');
   if (!response.ok) throw new Error('Temple verification unavailable');
   const claim = await response.json();
   return claim?.sub ? claim : null;
@@ -64,7 +65,7 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'ยังไม่ได้ตั้งค่าการเชื่อมระบบสมาชิก' });
   let claim;
   try { claim = await session(String(req.headers.authorization || '').replace(/^Bearer\s+/i, '')); }
-  catch { return res.status(503).json({ error: 'ยังตรวจสอบสิทธิ์กับเว็บไซต์วัดไม่ได้ กรุณาลองใหม่อีกครั้ง' }); }
+  catch (error) { return res.status(503).json({ error: error.message === 'TEMPLE_VERSION_OLD' ? 'เว็บวัดยังไม่ใช้เวอร์ชันตรวจสิทธิ์ห้องสมุดล่าสุด กรุณานำ Deployment ล่าสุดของเว็บวัดขึ้น Production' : 'ยังตรวจสอบสิทธิ์กับเว็บไซต์วัดไม่ได้ กรุณาลองใหม่อีกครั้ง' }); }
   if (!claim) return res.status(401).json({ error: 'ข้อมูลเข้าสู่ระบบหมดอายุ กรุณารีเฟรชหน้าเจ้าหน้าที่' });
   try {
     const people = await db(`members?id=eq.${enc(claim.sub)}&select=id,role,membership_status&limit=1`);
