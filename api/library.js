@@ -68,11 +68,15 @@ export default async function handler(req, res) {
   catch (error) { return res.status(503).json({ error: error.message === 'TEMPLE_VERSION_OLD' ? 'เว็บวัดยังไม่ใช้เวอร์ชันตรวจสิทธิ์ห้องสมุดล่าสุด กรุณานำ Deployment ล่าสุดของเว็บวัดขึ้น Production' : 'ยังตรวจสอบสิทธิ์กับเว็บไซต์วัดไม่ได้ กรุณาลองใหม่อีกครั้ง' }); }
   if (!claim) return res.status(401).json({ error: 'ข้อมูลเข้าสู่ระบบหมดอายุ กรุณารีเฟรชหน้าเจ้าหน้าที่' });
   try {
-    const people = await db(`members?id=eq.${enc(claim.sub)}&select=id,role,membership_status&limit=1`);
+    const people = await db(`members?id=eq.${enc(claim.sub)}&select=id,full_name,display_name,role,membership_status&limit=1`);
     const actor = people[0];
     if (!actor || (actor.membership_status && actor.membership_status !== 'active')) return res.status(403).json({ error: 'สมาชิกไม่มีสิทธิ์ใช้งาน' });
     const staff = actor.role === 'admin';
-    if (action === 'me') return res.json({ id: actor.id, role: actor.role, staff });
+    if (action === 'me' && req.method === 'GET') return res.json({ id: actor.id, name: actor.full_name || actor.display_name || 'สมาชิก', role: actor.role, staff });
+    if (action === 'my-loans' && req.method === 'GET') {
+      const loans = await db(`library_loans?member_id=eq.${enc(actor.id)}&select=id,delivery_method,status,borrowed_at,due_at,returned_at,library_copies(barcode,books(title,author))&order=borrowed_at.desc&limit=100`);
+      return res.json({ loans });
+    }
     if (!staff) return res.status(403).json({ error: 'เฉพาะผู้ดูแลระบบวัด' });
     if (req.method === 'GET' && action === 'inventory') {
       const books = await db('books?select=id,title,author,isbn,cover_url,total_copies,available_copies,is_active&order=created_at.desc&limit=200');

@@ -65,9 +65,10 @@ function openDetail(book) {
   content.append(el('p', 'detail-meta', [book.author && `ผู้เขียน: ${book.author}`, book.isbn && `ISBN: ${book.isbn}`].filter(Boolean).join('  ·  ') || 'รายละเอียดหนังสือ'));
   const availability = el('span', book.available_copies > 0 ? 'availability' : 'availability unavailable', book.available_copies > 0 ? `พร้อมให้ยืม ${book.available_copies} เล่ม` : 'ยังไม่มีเล่มว่าง');
   content.append(availability, el('p', 'detail-description', book.description || 'ยังไม่มีคำอธิบายหนังสือ'));
-  content.append(el('p', 'borrow-note', 'สมาชิกวัดใช้บัตรสมาชิกใบเดิมเพื่อใช้สิทธิ์ห้องสมุด ระบบขอยืมจะเปิดเมื่อเชื่อมการยืนยันตัวตนและเจ้าหน้าที่เรียบร้อย'));
-  const link = el('a', 'borrow-button', 'ไปยังเว็บสมาชิกวัด ↗');
-  link.href = config.templeMemberUrl || 'https://watt.nathoeng.com/';
+  content.append(el('p', 'borrow-note', 'ติดต่อเจ้าหน้าที่เพื่อบันทึกยืม–คืนด้วยบัตรสมาชิกวัดใบเดิม และติดตามรายการยืมได้ที่ห้องสมุดของฉัน'));
+  const link = el('a', 'borrow-button', 'ดูรายการยืมของฉัน');
+  link.href = '#member-area';
+  link.addEventListener('click', () => { closeDetail(); loadMyLoans(); });
   content.append(link);
   modal.hidden = false; document.body.style.overflow = 'hidden'; modalCard.focus();
 }
@@ -77,3 +78,59 @@ document.querySelector('#clear-search').addEventListener('click', () => { input.
 document.querySelector('#close-detail').addEventListener('click', closeDetail);
 modal.addEventListener('click', event => { if (event.target.dataset.close) closeDetail(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && !modal.hidden) closeDetail(); });
+
+// Keep short-lived assertions in memory; renew from the temple's HttpOnly session.
+let memberAssertion = null;
+let memberExpiry = 0;
+async function memberApi(action) {
+  if (!memberAssertion || Date.now() >= memberExpiry) {
+    const response = await fetch('https://watt.nathoeng.com/api/line-login?route=library-session', { credentials: 'include', cache: 'no-store' });
+    if (!response.ok) {
+      const error = new Error(response.status === 401 ? 'กรุณาเข้าสู่ระบบสมาชิกวัดก่อน แล้วกลับมาใช้ห้องสมุดได้เลย' : 'ยังเชื่อมบัญชีสมาชิกไม่ได้ กรุณาลองใหม่อีกครั้ง');
+      error.loginRequired = response.status === 401;
+      throw error;
+    }
+    const data = await response.json();
+    memberAssertion = data.token; memberExpiry = Date.now() + 120000;
+  }
+  const response = await fetch(`/api/library?action=${encodeURIComponent(action)}`, { cache: 'no-store', headers: { Authorization: `Bearer ${memberAssertion}` } });
+  const data = await response.json();
+  if (!response.ok) {
+    if (response.status === 401) { memberAssertion = null; memberExpiry = 0; }
+    throw new Error(data.error || 'ยังโหลดรายการไม่ได้ กรุณาลองใหม่');
+  }
+  return data;
+}
+function memberError(error) {
+  document.querySelector('#member-status').textContent = error.message;
+  document.querySelector('#member-login').hidden = !error.loginRequired;
+}
+async function loadMyLoans() {
+  const target = document.querySelector('#my-loans');
+  const button = document.querySelector('#my-loans-button');
+  button.disabled = true; target.textContent = 'กำลังโหลดรายการ…';
+  try {
+    const { loans } = await memberApi('my-loans');
+    target.replaceChildren();
+    if (!loans.length) target.textContent = 'ยังไม่มีรายการยืมหนังสือ';
+    for (const loan of loans) {
+      const row = el('article', 'member-loan');
+      row.append(el('strong', '', loan.library_copies?.books?.title || 'หนังสือห้องสมุด'));
+      row.append(el('p', '', `${loan.library_copies?.barcode || ''} · ${loan.status === 'returned' ? 'คืนแล้ว' : 'กำลังยืม'}`));
+      if (loan.due_at) row.append(el('small', '', `กำหนดคืน ${new Date(loan.due_at).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' })}`));
+      target.append(row);
+    }
+  } catch (error) { target.textContent = ''; memberError(error); }
+  finally { button.disabled = false; }
+}
+document.querySelector('#my-loans-button').addEventListener('click', loadMyLoans);
+(async () => {
+  try {
+    const member = await memberApi('me');
+    document.querySelector('#member-status').textContent = `${member.name} · เชื่อมบัญชีสมาชิกวัดแล้ว`;
+    document.querySelector('#member-actions').hidden = false;
+    document.querySelector('#staff-link').hidden = !member.staff;
+    document.querySelector('.member-link').textContent = 'บัญชีของฉัน ↗';
+    if (new URLSearchParams(location.search).get('member') === '1') await loadMyLoans();
+  } catch (error) { memberError(error); }
+})();
