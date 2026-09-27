@@ -1,3 +1,4 @@
+import { validateBorrowContact, profileDefaults } from '../lib/borrow-address.js';
 import { randomUUID } from 'node:crypto';
 const str = (v, n = 300) => String(v ?? '').trim().slice(0, n);
 const enc = encodeURIComponent;
@@ -36,6 +37,14 @@ async function db(path, method = 'GET', body) {
 async function dbAll(path) {
   const result=[];
   for(let offset=0;;offset+=1000){const rows=await db(`${path}&limit=1000&offset=${offset}`);result.push(...rows);if(rows.length<1000)return result;}
+}
+async function borrowProfile(actor) {
+  let details={},phone='';
+  try {const rows=await db(`member_profile_details?member_id=eq.${enc(actor.id)}&select=member_address,address_house_no,address_village_no,address_extra,address_province_id,address_district_id,address_subdistrict_id&limit=1`);details=rows[0]||{};}
+  catch(error){if(!['42703','PGRST204','PGRST205','42P01'].includes(error.dbCode))throw error;}
+  try {const rows=await db(`members?id=eq.${enc(actor.id)}&select=phone&limit=1`);phone=rows[0]?.phone||'';}
+  catch(error){if(!['42703','PGRST204'].includes(error.dbCode))throw error;}
+  return profileDefaults({...actor,phone},details);
 }
 function isbn(raw) {
   const code = str(raw, 20).replace(/[\s-]/g, '').toUpperCase();
@@ -90,6 +99,7 @@ export default async function handler(req, res) {
     if (!actor || (actor.membership_status && actor.membership_status !== 'active')) return res.status(403).json({ error: 'สมาชิกไม่มีสิทธิ์ใช้งาน' });
     const staff = actor.role === 'admin';
     if (action === 'me' && req.method === 'GET') return res.json({ id: actor.id, name: actor.full_name || actor.display_name || 'สมาชิก', role: actor.role, staff });
+    if(action==='borrow-profile' && req.method==='GET')return res.json({profile:await borrowProfile(actor)});
     if (action === 'my-loans' && req.method === 'GET') {
       const loans = await db(`library_loans?member_id=eq.${enc(actor.id)}&select=*,library_copies(barcode,books(title,author,cover_url))&order=borrowed_at.desc&limit=100`);
       return res.json({ loans });
@@ -97,7 +107,8 @@ export default async function handler(req, res) {
     if(action==='reserve' && req.method==='POST') {
       const b=req.body||{};
       if(!/^[0-9a-f-]{36}$/i.test(str(b.bookId)) || b.accepted!==true || b.termsVersion!=='2026-09-27' || !['pickup','ship_cod'].includes(b.method)) return res.status(400).json({error:'เลือกหนังสือ วิธีรับ และยอมรับเงื่อนไขก่อนจอง'});
-      const loan=await db('rpc/library_reserve','POST',{p_book:b.bookId,p_actor:actor.id,p_method:b.method,p_recipient:str(b.recipient,200),p_phone:str(b.phone,40),p_address:str(b.address,1000),p_terms:b.termsVersion});
+      const contact=validateBorrowContact(b,actor.full_name||actor.display_name||'');
+      const loan=await db('rpc/library_reserve','POST',{p_book:b.bookId,p_actor:actor.id,p_method:b.method,p_recipient:contact.recipient,p_phone:contact.phone,p_address:contact.address,p_terms:b.termsVersion});
       return res.json({loan});
     }
     if(action==='loan-action' && req.method==='POST') {

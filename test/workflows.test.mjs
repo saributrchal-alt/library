@@ -8,7 +8,7 @@ async function invoke(action,body={},options={}){
  globalThis.fetch=async(url,init={})=>{
   const path=String(url);calls.push({path,body:init.body&&JSON.parse(init.body)});
   if(path.includes('library-verify'))return Response.json({sub:'member-A'});
-  if(path.includes('/members?'))return Response.json([{id:'member-A',role:options.staff?'admin':'member',membership_status:'active'}]);
+  if(path.includes('/members?'))return Response.json([{id:'member-A',full_name:'Verified Member',role:options.staff?'admin':'member',membership_status:'active'}]);
   if(path.includes('/rpc/'))return options.rpcError?Response.json({message:'ไม่มีสิทธิ์ทำรายการ'},{status:400}):Response.json({id,status:'pending'});
   if(path.includes('/library_loans?'))return Response.json([]);
   if(path.includes('/books?'))return Response.json(options.books||[]);
@@ -19,8 +19,8 @@ async function invoke(action,body={},options={}){
  return {res,calls};
 }
 test('reservation uses verified member and records versioned consent',async()=>{
- const {res,calls}=await invoke('reserve',{bookId:id,method:'pickup',accepted:true,termsVersion:'2026-09-27',memberId:'victim'});
- assert.equal(res.code,200);const rpc=calls.find(c=>c.path.includes('/rpc/'));assert.equal(rpc.body.p_actor,'member-A');assert.equal(rpc.body.p_terms,'2026-09-27');assert.ok(!JSON.stringify(rpc).includes('victim'));
+ const {res,calls}=await invoke('reserve',{bookId:id,method:'pickup',accepted:true,termsVersion:'2026-09-27',memberId:'victim',recipient:'Fake Name',phone:'0812345678',houseNo:'1',provinceId:1,districtId:1001,subdistrictId:100101,postalCode:'10200'});
+ assert.equal(res.code,200);const rpc=calls.find(c=>c.path.includes('/rpc/'));assert.equal(rpc.body.p_actor,'member-A');assert.equal(rpc.body.p_terms,'2026-09-27');assert.ok(rpc.body.p_address.endsWith('10200'));assert.ok(!JSON.stringify(rpc).includes('victim'));
 });
 test('reservation without consent never reaches write RPC',async()=>{
  const {res,calls}=await invoke('reserve',{bookId:id,method:'pickup'});assert.equal(res.code,400);assert.ok(!calls.some(c=>c.path.includes('/rpc/')));
@@ -42,4 +42,11 @@ test('search runs database filtering before pagination',async()=>{
 });
 test('staff shipping carries return address into transaction',async()=>{
  const {res,calls}=await invoke('loan-action',{loanId:id,operation:'ship',carrier:'Post',trackingNumber:'123',returnAddress:'Library return address'},{staff:true});assert.equal(res.code,200);assert.equal(calls.find(c=>c.path.includes('/rpc/')).body.p_data.returnAddress,'Library return address');
+});
+
+test('pickup reservation also requires phone and complete structured address',async()=>{
+ const {res,calls}=await invoke('reserve',{bookId:id,method:'pickup',accepted:true,termsVersion:'2026-09-27'});assert.equal(res.code,400);assert.ok(!calls.some(c=>c.path.includes('/rpc/')));
+});
+test('reservation recipient is bound to member name',async()=>{
+ const {calls}=await invoke('reserve',{bookId:id,method:'pickup',accepted:true,termsVersion:'2026-09-27',recipient:'Other person',phone:'0812345678',houseNo:'1',provinceId:1,districtId:1001,subdistrictId:100101,postalCode:'10200'});assert.equal(calls.find(c=>c.path.includes('/rpc/')).body.p_recipient,'Verified Member');
 });

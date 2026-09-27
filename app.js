@@ -72,25 +72,25 @@ async function openDetail(book) {
     for(const [label,key] of [['ผู้เขียน','author'],['ISBN','isbn'],['หมวด','category'],['เลขหมู่','classification'],['หัวข้อ','subject'],['เลขเรียกหนังสือ','call_number'],['สำนักพิมพ์','publisher'],['ปีพิมพ์','published_year'],['ครั้งที่พิมพ์','edition'],['ภาษา','language'],['จำนวนหน้า','pages']]){dl.append(el('dt','',label),el('dd','',book[key]||'ไม่ระบุ'));}
     content.append(dl,el('p','detail-description',book.description||'ยังไม่มีคำอธิบาย'),el('p','availability',`พร้อมให้ยืม ${book.available_copies} จาก ${book.total_copies} เล่ม`));
     const copies=el('ul','copy-list');for(const copy of data.copies)copies.append(el('li','',`${copy.barcode} · ${window.LIBRARY_STATUS[copy.status]||copy.status} · ${copy.shelf||'ยังไม่ระบุชั้น'}`));content.append(copies);
-    if(book.available_copies>0)content.append(reservationForm(book));
+    if(book.available_copies>0)content.append(await reservationForm(book));
     else content.append(el('p','borrow-note','ยังไม่มีตัวเล่มพร้อมให้ยืม'));
   }catch(error){content.replaceChildren(el('h2','','เปิดรายละเอียดไม่สำเร็จ'),el('p','',error.message));}
 }
-function reservationForm(book){
+async function reservationForm(book){
  const f=el('form','reservation-form');f.append(el('h3','','จองเพื่อยืม'),el('p','','ไม่ต้องระบุเวลารับหนังสือ'));
  const method=el('select');method.name='method';method.append(new Option('รับด้วยตนเองที่วัด','pickup'),new Option('ส่งไปอ่านที่บ้าน · ค่าส่ง COD','ship_cod'));
  const methodLabel=el('label','','วิธีรับหนังสือ');methodLabel.append(method);f.append(methodLabel);
- const shipping=el('div','shipping-fields');shipping.hidden=true;
- for(const [name,label] of [['recipient','ชื่อผู้รับ'],['phone','เบอร์โทรศัพท์'],['address','ที่อยู่จัดส่ง พร้อมรหัสไปรษณีย์']]){
-   const wrap=el('label','',label),field=el(name==='address'?'textarea':'input');field.name=name;field.maxLength=name==='address'?1000:name==='phone'?40:200;if(name==='phone')field.type='tel';wrap.append(field);shipping.append(wrap);
- }
- f.append(shipping);method.onchange=()=>{shipping.hidden=method.value!=='ship_cod';shipping.querySelectorAll('input,textarea').forEach(e=>e.required=!shipping.hidden);};
+ const {mountAddress}=await import('/address-form.js');
+ let defaults={},profileError='';
+ try{defaults=(await memberApi('borrow-profile')).profile;}catch(error){profileError=error.message;}
+ const contact=mountAddress(f,defaults);
+ if(profileError)f.append(el('p','borrow-note',profileError));
  f.append(el('p','borrow-note',window.LIBRARY_TERMS));
  const acceptLabel=el('label','checkbox'),accept=el('input');accept.type='checkbox';accept.required=true;acceptLabel.append(accept,document.createTextNode('ข้าพเจ้ายอมรับเงื่อนไขการยืมและรับผิดชอบค่าขนส่งตามวิธีที่เลือก'));f.append(acceptLabel);
  const submit=el('button','borrow-button','ส่งคำขอจองยืม');submit.type='submit';const status=el('p');status.setAttribute('role','status');f.append(submit,status);
  f.onsubmit=async event=>{
   event.preventDefault();submit.disabled=true;status.textContent='กำลังจอง…';
-  try{await memberApi('reserve','POST',{...Object.fromEntries(new FormData(f)),bookId:book.id,accepted:accept.checked,termsVersion:window.LIBRARY_TERMS_VERSION});status.textContent='ส่งคำขอแล้ว · ตัวเล่มถูกกันไว้ รอเจ้าหน้าที่อนุมัติ';submit.textContent='จองแล้ว';await loadMyLoans();}
+  try{contact.validate();await memberApi('reserve','POST',{...Object.fromEntries(new FormData(f)),bookId:book.id,accepted:accept.checked,termsVersion:window.LIBRARY_TERMS_VERSION});status.textContent='ส่งคำขอแล้ว · ตัวเล่มถูกกันไว้ รอเจ้าหน้าที่อนุมัติ';submit.textContent='จองแล้ว';await loadMyLoans();}
   catch(error){status.textContent=error.message;submit.disabled=false;if(error.loginRequired){const a=el('a','','เข้าสู่ระบบสมาชิกวัด');a.href='https://watt.nathoeng.com/#login-page';status.append(a);}}
  };return f;
 }

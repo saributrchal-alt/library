@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {areas,validateBorrowContact,profileDefaults} from '../lib/borrow-address.js';
+const valid={recipient:'สมาชิก',phone:'081-234-5678',houseNo:'10/2',provinceId:1,districtId:1001,subdistrictId:100101,postalCode:'10200'};
+test('Thai area dataset has complete postcode coverage',()=>{assert.equal(areas.provinces.length,77);assert.ok(areas.subdistricts.length>7000);for(const s of areas.subdistricts){assert.match(s[3],/^[1-9]\d{4}$/);assert.ok(areas.districts.some(d=>d[0]===s[1]));}});
+test('member profile defaults match area IDs and populate postcode',()=>{const v=profileDefaults({full_name:'Member',phone:'0812345678'},{address_house_no:'10/2',address_province_id:1,address_district_id:1001,address_subdistrict_id:100101});assert.equal(v.recipient,'Member');assert.equal(v.postalCode,'10200');assert.equal(v.phone,'0812345678');});
+test('missing profile data stays blank',()=>{const v=profileDefaults();assert.ok(Object.values(v).every(x=>x===''));});
+test('mismatched stored areas are not silently accepted',()=>{const v=profileDefaults({}, {address_province_id:2,address_district_id:1001,address_subdistrict_id:100101});assert.equal(v.districtId,'');assert.equal(v.subdistrictId,'');assert.equal(v.postalCode,'');});
+test('server formats canonical Thai address and member name',()=>{const v=validateBorrowContact(valid,'Verified Member');assert.equal(v.recipient,'Verified Member');assert.equal(v.phone,'0812345678');assert.match(v.address,/แขวงพระบรมมหาราชวัง.*10200$/);});
+test('missing phone, house, postcode and inconsistent district rejected',()=>{for(const patch of [{phone:''},{houseNo:''},{postalCode:''},{postalCode:'123456'},{districtId:1101}])assert.throws(()=>validateBorrowContact({...valid,...patch}));});
