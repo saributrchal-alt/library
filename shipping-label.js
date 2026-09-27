@@ -1,3 +1,4 @@
+const SENDER_ADDRESS = "231 หมู่ 2 บ้านตาลเดี่ยว\nต.ธาตุ อ.วานรนิวาส จ.สกลนคร 47120\nโทร. 0963513441";
 const n=(tag,cls,text)=>{const el=document.createElement(tag);el.className=cls||'';if(text!=null)el.textContent=text;return el;};
 // Code 39 (wide:narrow = 3:1), internal copy ID only; never a carrier barcode.
 const patterns={0:'nnnwwnwnn',1:'wnnwnnnnw',2:'nnwwnnnnw',3:'wnwwnnnnn',4:'nnnwwnnnw',5:'wnnwwnnnn',6:'nnwwwnnnn',7:'nnnwnnwnw',8:'wnnwnnwnn',9:'nnwwnnwnn',A:'wnnnnwnnw',B:'nnwnnwnnw',C:'wnwnnwnnn',D:'nnnnwwnnw',E:'wnnnwwnnn',F:'nnwnwwnnn',G:'nnnnnwwnw',H:'wnnnnwwnn',I:'nnwnnwwnn',J:'nnnnwwwnn',K:'wnnnnnnww',L:'nnwnnnnww',M:'wnwnnnnwn',N:'nnnnwnnww',O:'wnnnwnnwn',P:'nnwnwnnwn',Q:'nnnnnnwww',R:'wnnnnnwwn',S:'nnwnnnwwn',T:'nnnnwnwwn',U:'wwnnnnnnw',V:'nwwnnnnnw',W:'wwwnnnnnn',X:'nwnnwnnnw',Y:'wwnnwnnnn',Z:'nwwnwnnnn','-':'nwnnnnwnw','.':'wwnnnnwnn',' ':'nwwnnnwnn','*':'nwnnwnwnn'};
@@ -13,8 +14,7 @@ export function renderShippingLabel(loan){
  const route=n('div','parcel-route');route.append(n('strong','',loan.carrier||'รอระบุบริษัทขนส่ง'),n('span','','TH / พัสดุหนังสือ'));label.append(route);
  const recipient=n('section','parcel-recipient');recipient.append(n('div','parcel-caption','TO / ผู้รับ'),n('h2','',loan.recipient||'ยังไม่ระบุชื่อผู้รับ'),n('b','parcel-phone',loan.phone?`โทร. ${loan.phone}`:'ยังไม่ระบุเบอร์โทร'),n('p','parcel-address',loan.address||'ยังไม่ระบุที่อยู่'));
  const postcode=String(loan.address||'').match(/\b[1-9]\d{4}\b(?=\s*$)/);if(postcode)recipient.append(n('div','parcel-postcode',postcode[0]));label.append(recipient);
- const shipping=n('section','parcel-tracking');shipping.append(n('span','parcel-caption','TRACKING NO. / เลขพัสดุ'),n('strong','',loan.tracking_number||'ยังไม่ได้บันทึกเลขพัสดุ'));label.append(shipping);
- const sender=n('section','parcel-sender');sender.append(n('span','parcel-caption','FROM / ผู้ส่ง · ที่อยู่ส่งคืน'),n('b','','ห้องสมุดวัดพุทธอุทยานนาเทิง'),n('p','',loan.return_address||'กรุณาระบุที่อยู่ส่งคืนก่อนพิมพ์'));label.append(sender);
+ const sender=n('section','parcel-sender');sender.append(n('span','parcel-caption','FROM / ผู้ส่ง · ที่อยู่ส่งคืน'),n('b','','ห้องสมุดวัดพุทธอุทยานนาเทิง'),n('p','',SENDER_ADDRESS));label.append(sender);
  const item=n('section','parcel-item');item.append(n('span','parcel-caption','CONTENTS / รายการหนังสือ'),n('p','',loan.library_copies?.books?.title||'หนังสือห้องสมุด'));
  const code=loan.library_copies?.barcode||'';const bars=barcode(code);if(bars)item.append(bars);item.append(n('span','parcel-copy',`รหัสตัวเล่ม · ${code||'—'}`));label.append(item);
  const footer=n('footer','parcel-footer');footer.append(n('strong','','COD · เก็บเฉพาะค่าขนส่งปลายทาง'),n('span','','ไม่ใช่ราคาหนังสือ • โปรดรักษาพัสดุให้แห้ง'));label.append(footer);
@@ -33,8 +33,8 @@ export function showShippingLabel(loan,{demo=false}={}){
  function keys(e){if(e.key==='Escape')dismiss();if(e.key==='Tab'){if(e.shiftKey&&document.activeElement===print){e.preventDefault();close.focus();}else if(!e.shiftKey&&document.activeElement===close){e.preventDefault();print.focus();}}}document.addEventListener('keydown',keys);close.onclick=dismiss;
  print.onclick=async()=>{
   await document.fonts.ready;
-  const missing=!loan.recipient||!loan.phone||!loan.address||!loan.return_address;
-  if(missing){notice.textContent='กรอกชื่อผู้รับ เบอร์โทร ที่อยู่ และที่อยู่ส่งคืนให้ครบก่อนพิมพ์';return;}
+  const missing=!loan.recipient||!loan.phone||!loan.address;
+  if(missing){notice.textContent='กรอกชื่อผู้รับ เบอร์โทร และที่อยู่ผู้รับให้ครบก่อนพิมพ์';return;}
   if(paper.scrollHeight>paper.clientHeight+2){notice.textContent='ข้อความยาวเกินฉลาก กรุณาย่อรายละเอียดที่ไม่จำเป็นก่อนพิมพ์ เพื่อไม่ให้ข้อมูลถูกตัด';return;}
   notice.textContent='';document.body.classList.add('printing-parcel');window.print();document.body.classList.remove('printing-parcel');
  };print.focus();return overlay;
