@@ -1,0 +1,5 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ตัวอย่างฉลากพัสดุ · ห้องสมุดนาเทิง</title><link rel="stylesheet" href="/shipping-label.css"></head><body><button id="preview">ดูตัวอย่างฉลาก</button><script type="module">
+import {showShippingLabel} from './shipping-label.js';
+const sample={recipient:'สมาชิกตัวอย่าง (ข้อมูลสมมติ)',phone:'08X-XXX-XXXX',address:'99/9 หมู่ 2 ถนนตัวอย่าง\nตำบลธาตุ อำเภอวานรนิวาส\nจังหวัดสกลนคร 47120',return_address:'[ที่อยู่ผู้ส่งจากรายการยืม]\n[เบอร์โทรศัพท์ห้องสมุด]',carrier:'บริษัทขนส่ง / CARRIER',tracking_number:'SAMPLE-00000001',library_copies:{barcode:'NTL-00000001',books:{title:'หนังสือธรรมะเพื่อการเรียนรู้และแบ่งปัน'}}};
+document.querySelector('#preview').onclick=()=>showShippingLabel(sample,{demo:true});showShippingLabel(sample,{demo:true});
+</script></body></html>

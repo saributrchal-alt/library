@@ -2,4 +2,4 @@
 
 .save-status{margin:0;padding:10px 12px;border-radius:8px;background:#eef5e9;color:#345f3c;font-size:13px;line-height:1.6}.save-status:empty{display:none}.save-status.error{background:#fff0ed;color:#9a3d37}.admin-card button:disabled{opacity:.6;cursor:wait}
 
-.request-card{border:1px solid #d9ded2;padding:22px;border-radius:14px;margin:18px 0;background:#fff;overflow-wrap:anywhere}.request-card p{white-space:pre-wrap}.loan-controls{display:grid;gap:10px;margin:16px 0}.request-card>button{margin:6px 8px 0 0}.tabs{flex-wrap:wrap}#print-label{display:none}@media print{body>*{display:none!important}body>#print-label{display:block!important;padding:24px;font-size:18px;color:#000}#print-label p{white-space:pre-wrap}}
+.request-card{border:1px solid #d9ded2;padding:22px;border-radius:14px;margin:18px 0;background:#fff;overflow-wrap:anywhere}.request-card p{white-space:pre-wrap}.loan-controls{display:grid;gap:10px;margin:16px 0}.request-card>button{margin:6px 8px 0 0}.tabs{flex-wrap:wrap}

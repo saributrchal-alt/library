@@ -246,9 +246,9 @@ function renderRequests(){
  }
 }
 function eventLabel(s){return ({approve:'อนุมัติ',reject:'ไม่อนุมัติ',cancel:'ยกเลิก',ship:'จัดส่ง',handover:'รับที่วัด',received:'ผู้ยืมได้รับแล้ว',accept_return:'เจ้าหน้าที่รับคืน',return_pickup:'เลือกคืนที่วัด'})[s]||labelStatus(s);}
-function printLabel(loan){
- const area=node('section','');area.id='print-label';area.append(node('h2','ผู้รับหนังสือ'),node('h3',loan.recipient||''),node('p',loan.phone||''),node('p',loan.address||''),node('p',`หนังสือ: ${loan.library_copies?.books?.title||''}`),node('p',`รหัส: ${loan.library_copies?.barcode||''}`),node('p',`ที่อยู่ส่งคืน: ${loan.return_address||'เจ้าหน้าที่กรอกก่อนบันทึกจัดส่ง'}`),node('strong','เก็บเฉพาะค่าขนส่งปลายทาง (COD) · ไม่ใช่ราคาหนังสือ'));
- document.body.append(area);window.print();area.remove();
+async function printLabel(loan){
+ try { const {showShippingLabel}=await import('/shipping-label.js');showShippingLabel(loan); }
+ catch(error){note('เปิดตัวอย่างฉลากไม่ได้ กรุณาลองใหม่',true);}
 }
 
 let cameraStream=null;
