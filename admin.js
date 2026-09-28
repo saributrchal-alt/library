@@ -227,6 +227,7 @@ function renderRequests(){
    if(loan.return_tracking_number)card.append(node('p',`ขากลับ: ${loan.return_carrier} · ${loan.return_tracking_number}`));
    if(loan.return_method==='pickup')card.append(node('p','ผู้ยืมเลือกนำมาคืนที่วัด'));
    if(loan.due_at)card.append(node('p',`กำหนดคืน ${new Date(loan.due_at).toLocaleDateString('th-TH')}`));
+   card.append(LibraryLoanProgress.render(loan));
    const form=node('form','');form.className='loan-controls';
    function field(name,label,type='text'){const wrap=node('label',label),input=node('input','');input.name=name;input.type=type;wrap.append(input);form.append(wrap);return input;}
    if(loan.status==='pending') field('dueAt','กำหนดคืน (ถ้ามี)','date');

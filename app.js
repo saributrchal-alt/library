@@ -145,6 +145,7 @@ async function loadMyLoans() {
       if(loan.return_address)row.append(el('p','','ที่อยู่ส่งคืน: '+loan.return_address));
       if(loan.return_tracking_number)row.append(el('p','',`ขากลับ: ${loan.return_carrier} · ${loan.return_tracking_number}`));
       if(loan.return_method==='pickup'&&loan.status!=='returned')row.append(el('p','','เลือกนำมาคืนที่วัด · รอเจ้าหน้าที่รับคืน'));
+      row.append(LibraryLoanProgress.render(loan));
       const feedback=el('p');feedback.setAttribute('role','status');
       async function action(operation,extra={},button){
         button.disabled=true;feedback.textContent='กำลังบันทึก…';

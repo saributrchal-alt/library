@@ -1,0 +1,20 @@
+.loan-progress{margin:20px 0;padding:18px 14px;background:#fff;border:1px solid #dce5df;border-radius:16px;color:#254d40}
+.loan-progress h4{margin:0 0 20px;font-size:15px}
+.loan-progress-track{display:flex;list-style:none!important;padding:0!important;margin:0!important;gap:0}
+.loan-progress-track li{flex:1;min-width:0;position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;padding:0 4px;font-size:12px;line-height:1.5}
+.loan-progress-track li:not(:first-child):before{content:'';position:absolute;top:15px;right:50%;width:100%;height:3px;background:#e1e7e3}
+.loan-progress-track li.is-done:before{background:#287454}
+.loan-step-mark{z-index:1;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#eef1ee;border:2px solid #d4ddd6;color:#617168;font-weight:700;margin-bottom:10px;box-sizing:border-box}
+.is-done .loan-step-mark{background:#287454;border-color:#287454;color:white}
+.is-current .loan-step-mark{border-color:#ab781c;background:#fff7e5;color:#825d16;box-shadow:0 0 0 4px #fff7e5}
+.loan-step-label{font-weight:600;overflow-wrap:anywhere}
+.loan-progress-track small{font-size:11px;color:#68756d;margin-top:4px}
+.loan-progress-stopped{color:#9c432e;margin-bottom:0}
+@media(max-width:640px){
+ .loan-progress-track{flex-direction:column;gap:0}
+ .loan-progress-track li{display:grid;grid-template-columns:32px 1fr;column-gap:12px;text-align:left;align-items:start;padding:0 0 22px;min-height:64px;box-sizing:border-box}
+ .loan-progress-track li:last-child{padding-bottom:0;min-height:32px}
+ .loan-progress-track li:not(:first-child):before{top:-32px;left:15px;right:auto;width:3px;height:48px}
+ .loan-step-mark{grid-row:1/3;margin:0}
+ .loan-progress-track small{grid-column:2;margin:0}
+}
