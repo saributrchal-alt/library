@@ -50,3 +50,5 @@ test('pickup reservation also requires phone and complete structured address',as
 test('reservation recipient is bound to member name',async()=>{
  const {calls}=await invoke('reserve',{bookId:id,method:'pickup',accepted:true,termsVersion:'2026-09-27',recipient:'Other person',phone:'0812345678',houseNo:'1',provinceId:1,districtId:1001,subdistrictId:100101,postalCode:'10200'});assert.equal(calls.find(c=>c.path.includes('/rpc/')).body.p_recipient,'Verified Member');
 });
+
+test('ordinary members cannot upload covers',async()=>{const {res,calls}=await invoke('cover',{image:'data:image/jpeg;base64,aaaa'});assert.equal(res.code,403);assert.ok(!calls.some(c=>c.path.includes('media.nathoeng.com')));});

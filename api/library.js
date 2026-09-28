@@ -1,5 +1,5 @@
 import { validateBorrowContact, profileDefaults } from '../lib/borrow-address.js';
-import { randomUUID } from 'node:crypto';
+import { uploadCover } from '../lib/cover-upload.js';
 const str = (v, n = 300) => String(v ?? '').trim().slice(0, n);
 const enc = encodeURIComponent;
 async function session(token) {
@@ -134,19 +134,8 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     const b = req.body || {};
     if(action==='cover') {
-      if(typeof b.image!=='string' || b.image.length>700000) return res.status(400).json({error:'ภาพต้องมีขนาดไม่เกิน 500 KB'});
-      const match=/^data:image\/(jpeg|webp);base64,([A-Za-z0-9+/=]+)$/.exec(b.image);
-      if(!match) return res.status(400).json({error:'รองรับ JPEG หรือ WebP เท่านั้น'});
-      const bytes=Buffer.from(match[2],'base64');
-      const valid=match[1]==='jpeg'?bytes[0]===255&&bytes[1]===216&&bytes[2]===255:bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WEBP';
-      if(!valid||bytes.length>512000) return res.status(400).json({error:'ข้อมูลภาพไม่ถูกต้องหรือใหญ่เกิน 500 KB'});
-      const name=`${randomUUID()}.${match[1]==='jpeg'?'jpg':'webp'}`,key=process.env.SUPABASE_SECRET_KEY;
-      const headers={apikey:key,'Content-Type':`image/${match[1]}`};
-      if(!key.startsWith('sb_secret_')) headers.Authorization=`Bearer ${key}`;
-      const origin=new URL(process.env.SUPABASE_URL).origin;
-      const upload=await fetch(`${origin}/storage/v1/object/library-covers/${name}`,{method:'POST',headers,body:bytes});
-      if(!upload.ok) return res.status(503).json({error:'เก็บภาพไม่สำเร็จ กรุณาตรวจว่าได้รัน SQL อัปเดตแล้ว'});
-      return res.json({url:`${origin}/storage/v1/object/public/library-covers/${name}`});
+      try { return res.json(await uploadCover(b.image)); }
+      catch(error) { return res.status(error.status||503).json({error:error.status?error.message:'เก็บภาพไม่สำเร็จ กรุณาลองใหม่'}); }
     }
     if (action === 'book') {
       const title = str(b.title, 250), code = b.isbn ? isbn(b.isbn) : null;
