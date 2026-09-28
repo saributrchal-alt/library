@@ -127,6 +127,7 @@ function memberError(error) {
   document.querySelector('#member-status').textContent = error.message;
   document.querySelector('#member-login').hidden = !error.loginRequired;
 }
+let expandedLoanId;
 async function loadMyLoans() {
   const target = document.querySelector('#my-loans');
   const button = document.querySelector('#my-loans-button');
@@ -135,10 +136,25 @@ async function loadMyLoans() {
     const { loans } = await memberApi('my-loans');
     target.replaceChildren();
     if (!loans.length) target.textContent = 'ยังไม่มีรายการยืมหนังสือ';
+    loans.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    if (expandedLoanId === undefined || (expandedLoanId !== null && !loans.some(loan=>loan.id===expandedLoanId))) expandedLoanId=loans[0]?.id;
     for (const loan of loans) {
-      const row = el('article', 'member-loan');
-      row.append(el('strong', '', loan.library_copies?.books?.title || 'หนังสือห้องสมุด'));
-      row.append(el('p', '', `${loan.library_copies?.barcode || ''} · ${window.LIBRARY_STATUS[loan.status]||loan.status}`));
+      const item = el('details', 'member-loan');
+      const summary = el('summary', 'member-loan-summary');
+      const heading = el('span', 'member-loan-heading');
+      heading.append(el('strong', '', loan.library_copies?.books?.title || 'หนังสือห้องสมุด'));
+      heading.append(el('span', 'member-loan-status', `${loan.library_copies?.barcode || ''} · ${window.LIBRARY_STATUS[loan.status]||loan.status}`));
+      summary.append(heading);
+      item.open = loan.id === expandedLoanId;
+      summary.onclick = event => {
+        event.preventDefault();
+        const open = !item.open;
+        for (const sibling of target.children) sibling.open = false;
+        item.open = open;
+        expandedLoanId = open ? loan.id : null;
+      };
+      const row = el('div', 'member-loan-detail');
+      item.append(summary,row);
       row.append(el('p','',loan.delivery_method==='pickup'?'รับที่วัด':'จัดส่งไปอ่านที่บ้าน · ค่าส่ง COD'));
       if (loan.due_at) row.append(el('small', '', `กำหนดคืน ${new Date(loan.due_at).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' })}`));
       if(loan.tracking_number)row.append(el('p','',`ขาไป: ${loan.carrier} · ${loan.tracking_number}`));
@@ -162,7 +178,7 @@ async function loadMyLoans() {
         const btn=el('button','','แจ้งส่งคืนแล้ว');btn.type='submit';f.append(btn);f.onsubmit=e=>{e.preventDefault();action('return_shipping',Object.fromEntries(new FormData(f)),btn);};row.append(f);
       }
       const history=el('button','','ประวัติรายการ');history.type='button';history.onclick=async()=>{history.disabled=true;try{const data=await memberApi('history','GET',null,{loanId:loan.id});const ul=el('ul');for(const e of data.events)ul.append(el('li','',`${new Date(e.created_at).toLocaleString('th-TH')} · ${({approve:'อนุมัติ',reject:'ไม่อนุมัติ',cancel:'ยกเลิก',ship:'จัดส่ง',handover:'รับที่วัด',received:'รับหนังสือแล้ว',accept_return:'ตรวจรับคืนแล้ว',return_pickup:'เลือกนำมาคืนที่วัด'})[e.event_type]||window.LIBRARY_STATUS[e.event_type]||e.event_type}`));history.replaceWith(ul);}catch(e){feedback.textContent=e.message;history.disabled=false;}};row.append(history,feedback);
-      target.append(row);
+      target.append(item);
     }
   } catch (error) { target.textContent = ''; memberError(error); }
   finally { button.disabled = false; }

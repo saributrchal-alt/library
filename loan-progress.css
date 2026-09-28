@@ -18,3 +18,12 @@
  .loan-step-mark{grid-row:1/3;margin:0}
  .loan-progress-track small{grid-column:2;margin:0}
 }
+
+.member-loan-summary{cursor:pointer;display:flex;align-items:center;gap:12px;list-style:none;border-radius:8px;padding:4px 0}
+.member-loan-summary::-webkit-details-marker{display:none}
+.member-loan-summary::after{content:'⌄';margin-left:auto;flex-shrink:0;font-size:22px;color:#315c49}
+.member-loan[open]>.member-loan-summary::after{transform:rotate(180deg)}
+.member-loan-heading{display:grid;gap:6px;min-width:0}
+.member-loan-status{font-size:14px;font-weight:400}
+.member-loan-summary:focus-visible{outline:3px solid #bda46b;outline-offset:4px}
+.member-loan-detail{padding-top:12px}
