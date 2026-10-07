@@ -1,1 +1,10 @@
-{"name":"nathoeng-library","private":true,"version":"1.0.0","type":"module"}
+{
+  "name": "nathoeng-library",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-branding.mjs",
+    "build:local": "node scripts/build-branding.mjs --local"
+  }
+}

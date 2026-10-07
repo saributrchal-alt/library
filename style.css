@@ -17,3 +17,18 @@
 .detail-cover{display:block;max-width:240px;max-height:360px;object-fit:contain;margin:20px auto}.book-metadata{display:grid;grid-template-columns:130px 1fr;gap:8px 14px}.book-metadata dt{color:#6d7368}.book-metadata dd{margin:0;overflow-wrap:anywhere}.copy-list{padding-left:22px;font-size:14px}.reservation-form,.return-form{background:#f3f4ee;padding:20px;border-radius:16px;margin:20px 0}.reservation-form label,.return-form label{display:block;margin:12px 0}.reservation-form input:not([type=checkbox]),.reservation-form select,.reservation-form textarea,.return-form input{display:block;width:100%;box-sizing:border-box;padding:12px;border:1px solid #cbd1c5;border-radius:8px;background:white;font:inherit}.reservation-form textarea{min-height:100px}.reservation-form .checkbox{display:flex;gap:10px;align-items:flex-start}.checkbox input{width:auto!important}.member-loan button,#more-books{padding:9px 15px;margin:8px 8px 4px 0;border:1px solid #bdc5b6;background:white;border-radius:8px;cursor:pointer;font:inherit}.member-loan{overflow-wrap:anywhere}.borrow-button{cursor:pointer;border:0;font:inherit}button:disabled{opacity:.55;cursor:wait}.modal-card{max-height:90dvh;overflow-y:auto;overscroll-behavior:contain}.detail-description{white-space:pre-wrap}.shipping-fields[hidden]{display:none}.book-card:focus-visible,button:focus-visible{outline:3px solid #bda46b;outline-offset:3px}@media(max-width:520px){.book-metadata{grid-template-columns:100px 1fr}.reservation-form{padding:12px}.site-header{gap:12px;flex-wrap:wrap}.header-links{flex-wrap:wrap}.modal-card{padding:22px}}
 
 .borrow-contact{border:1px solid #d5ddce;border-radius:12px;padding:16px;margin:20px 0;min-width:0}.borrow-contact legend{font-weight:700}.borrow-contact input[readonly]{background:#e9eee5;color:#4b5c49}.borrow-contact p{font-size:14px}
+
+/* Transparent Thai gable logo, shared by the catalog and staff pages. */
+.site-header{height:auto;min-height:158px;padding-block:12px;gap:20px;flex-wrap:nowrap}
+.brand{flex:none;display:block;line-height:0}
+.brand-logo{display:block;width:208px;height:auto;object-fit:contain}
+.brand:focus-visible{outline:3px solid #bda46b;outline-offset:6px;border-radius:4px}
+.admin-return-link{font-size:13px;text-align:right}
+@media(max-width:600px){
+  .site-header{min-height:122px;padding:12px 16px;gap:12px}
+  .brand-logo{width:clamp(144px,40vw,180px)}
+  .header-links{flex-direction:column;flex-wrap:nowrap;align-items:flex-end;gap:10px;text-align:right}
+  .header-links a{font-size:11px}
+  .member-link{white-space:nowrap}
+  .admin-return-link{font-size:12px}
+}
